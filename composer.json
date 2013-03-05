@@ -1,0 +1,27 @@
+{
+    "name": "pscheit/psc-cms-imagine",
+    "type": "library",
+    "description": "Image module for psc-cms",
+    "homepage": "http://www.ps-webforge.com",
+    "license": "LGPL-3.0",
+    "authors": [
+        {
+            "name": "Philipp Scheit",
+            "email": "p.scheit@ps-webforge.com"
+        }
+    ],
+    "autoload": {
+      "psr-0": {
+        "Psc\\Image": ["lib/Psc/Image"]
+      }
+    },
+    "minimum-stability": "dev",
+    "require": {
+        "imagine/Imagine": "0.3.*@stable"
+    },
+    "extra": {
+        "dev-alias": {
+            "dev-master": "1.2-dev"
+        }
+    }
+}

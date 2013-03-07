@@ -1,8 +1,7 @@
 <?php
 
-namespace Psc\CMS\Controller;
+namespace Psc\Image;
 
-use Psc\Image\Manager;
 use Psc\Form\ValidationPackage;
 use Webforge\Common\System\File;
 use Psc\Net\ServiceResponse;
@@ -46,10 +45,11 @@ class ImageController extends \Psc\SimpleObject {
    * @return Psc\Image\Image
    */
   public function insertImageFile(File $img, \stdClass $specification) {
-    $image = $this->manager->store($this->manager->createImagineImage($img),
-                                   NULL,
-                                   Manager::IF_NOT_EXISTS
-                                  );
+    $image = $this->manager->store(
+      $this->manager->createImagineImage($img),
+      NULL,
+      Manager::IF_NOT_EXISTS
+    );
     $this->manager->flush();
     
     return new ServiceResponse(Service::OK, $image, ServiceResponse::JSON_UPLOAD_RESPONSE);

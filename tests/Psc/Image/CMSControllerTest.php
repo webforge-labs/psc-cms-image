@@ -1,15 +1,11 @@
 <?php
 
-namespace Psc\CMS\Controller;
+namespace Psc\Image;
 
-use Psc\Image\Manager;
 use Psc\Data\FileCache;
 use Webforge\Common\System\File;
 
-/**
- * @group class:Psc\CMS\Controller\ImageController
- */
-class ImageControllerTest extends \Psc\Doctrine\DatabaseTestCase {
+class CMSControllerTest extends \Psc\Doctrine\DatabaseTestCase {
   
   protected $imageCtrl;
   

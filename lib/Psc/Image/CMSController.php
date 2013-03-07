@@ -10,7 +10,7 @@ use Psc\Net\Service;
 /**
  * 
  */
-class ImageController extends \Psc\SimpleObject {
+class CMSController extends \Psc\SimpleObject {
   
   /**
    * @var Psc\Image\Manager

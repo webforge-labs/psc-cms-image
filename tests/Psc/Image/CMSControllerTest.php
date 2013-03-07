@@ -10,7 +10,7 @@ class CMSControllerTest extends \Psc\Doctrine\DatabaseTestCase {
   protected $imageCtrl;
   
   public function setUp() {
-    $this->chainClass = 'Psc\CMS\Controller\ImageController';
+    $this->chainClass = 'Psc\Image\CMSController';
     parent::setUp();
     $manager = new Manager(
       'Psc\Entities\Image',
@@ -19,7 +19,7 @@ class CMSControllerTest extends \Psc\Doctrine\DatabaseTestCase {
       new FileCache($this->getTestDirectory('imagesCache/')->create())
     );
     
-    $this->imageCtrl = new ImageController($manager);      
+    $this->imageCtrl = new CMSController($manager);      
     
     $this->bud = $manager->store($manager->createImagineImage($this->getFile('img1.jpg')), 'bud', Manager::IF_NOT_EXISTS);
     $this->terence = $manager->store($manager->createImagineImage($this->getFile('img2.jpg')), 'terence', Manager::IF_NOT_EXISTS);

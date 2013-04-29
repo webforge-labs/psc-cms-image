@@ -170,11 +170,12 @@ class Manager extends \Psc\Object {
   public function storeVersion(Image $image, ImagineImage $imageVersion, $type, Array $arguments = array(), Array $options = array()) {
     $this->attach($image);
     $format = $this->parseFormat($options);
+    $quality = $this->parseQuality($options);
    
     $ac = $this->getCacheAdapter($type);
     $keys = $cacheKeys = $ac->getCacheKeys($imageVersion, $image, $arguments);
     
-    $keys = array_merge($keys, $this->getImageUniqueKeys($image, $format));
+    $keys = array_merge($keys, $this->getImageUniqueKeys($image, $format, $quality));
     
     /* jetzt cachen wir das Bild in unserem FileCache (oder was auch immer für ein Cache) */
     $this->cacheLog('store: "'.implode(':',$keys).'"');
@@ -196,13 +197,17 @@ class Manager extends \Psc\Object {
    * @param Image $image wird nicht überprüft ob es attached ist (das vorher machen)
    * @return array
    */
-  protected function getImageUniqueKeys(Image $image, $format = 'png') {
+  protected function getImageUniqueKeys(Image $image, $format = 'png', $quality = FALSE) {
     /* zu diesen schlüsseln fügen wir den Dateinamen des Bildes hinzu */
     $sourceFile = $image->getSourceFile();
     
     // eigentlich den . abschneiden */
     $keys = array_slice($sourceFile->getDirectory()->getPathArray(),-1,1);
-    
+
+    if ($quality !== FALSE) {
+      $keys[] = $quality;    
+    }
+
     // das ist das charDir und dazu kommt noch der Dateiname
     $keys[] = $sourceFile->getName(File::WITHOUT_EXTENSION).'.'.$format;
     return $keys;
@@ -235,11 +240,12 @@ class Manager extends \Psc\Object {
   public function loadVersion(Image $image, Array $keys, &$loaded, Array $options = array()) {
     $this->attach($image);
     $format = $this->parseFormat($options);
+    $quality = $this->parseQuality($options);
     
     /* Keys die reinkommen sind sowas wie:
       array($version, param1, param2, param3)
     */
-    $keys = array_merge($keys, $this->getImageUniqueKeys($image, $format));
+    $keys = array_merge($keys, $this->getImageUniqueKeys($image, $format, $quality));
     /* jetzt ists:
       array($version, param1, param2, param3, ..., $randomverzeichnis, $filename.'.png')
       o ä.
@@ -306,6 +312,7 @@ class Manager extends \Psc\Object {
   public function getURL(Image $image, $type, Array $arguments = array(), Array $options = array()) {
     $this->attach($image);
     $format = $this->parseFormat($options);
+    $quality = $this->parseQuality($options);
     
     if ($type == 'original') {
       $parts = array_merge(array('images'), $this->getImageUniqueKeys($image));
@@ -314,7 +321,7 @@ class Manager extends \Psc\Object {
       $this->getVersion($image, $type, $arguments, $options); // nur einfach erstellen
 
       $cacheKeys = $this->getCacheAdapter($type)->convertArguments($arguments);
-      $parts = array_merge(array('dimg', $type), $cacheKeys, $this->getImageUniqueKeys($image, $format));
+      $parts = array_merge(array('dimg', $type), $cacheKeys, $this->getImageUniqueKeys($image, $format, $quality));
     }
     
     return '/'.implode('/',$parts);
@@ -551,5 +558,8 @@ class Manager extends \Psc\Object {
   protected function parseFormat(Array $options = array()) {
     return isset($options['format']) ? $options['format'] : 'png';
   }
+
+  protected function parseQuality(Array $options = array()) {
+    return isset($options['quality']) ? $options['quality'] : FALSE;
+  }
 }
-?>

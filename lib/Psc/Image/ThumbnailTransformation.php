@@ -2,9 +2,8 @@
 
 namespace Psc\Image;
 
-use \Imagine\Image\ImageInterface AS ImagineImage,
-    \Imagine\Image\Box
-;
+use Imagine\Image\ImageInterface AS ImagineImage;
+use Imagine\Image\Box;
 
 class ThumbnailTransformation extends StandardTransformation {
 
@@ -17,5 +16,3 @@ class ThumbnailTransformation extends StandardTransformation {
     return $imagineImage->thumbnail(new Box($width, $height), $style);
   }
 }
-
-?>

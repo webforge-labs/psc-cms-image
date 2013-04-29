@@ -2,21 +2,20 @@
 
 namespace Psc\Image;
 
-use \Psc\Doctrine\Entities\BasicImage,
-    \Psc\Doctrine\Entities\BasicImageRepository,
-    \Psc\Doctrine\Helper as DoctrineHelper,
-    \Doctrine\ORM\EntityManager,
-    \Doctrine\Common\Collections\ArrayCollection,
-    \Imagine\Image\ImageInterface As ImagineImage,
-    \Psc\Code\Code,
-    \Webforge\Common\System\File,
-    \Webforge\Common\System\Dir,
-    \Webforge\Common\String as S,
-    \Psc\PSC,
-    \Imagine\Gd\Imagine,
-    \Psc\Data\FileCache,
-    \Psc\Data\Cache
-    ;
+use Psc\Doctrine\Entities\BasicImage;
+use Psc\Doctrine\Entities\BasicImageRepository;
+use Psc\Doctrine\Helper as DoctrineHelper;
+use Doctrine\ORM\EntityManager;
+use Doctrine\Common\Collections\ArrayCollection;
+use Imagine\Image\ImageInterface As ImagineImage;
+use Psc\Code\Code;
+use Webforge\Common\System\File;
+use Webforge\Common\System\Dir;
+use Webforge\Common\String as S;
+use Psc\PSC;
+use Imagine\Gd\Imagine;
+use Psc\Data\FileCache;
+use Psc\Data\Cache;
 
 class Manager extends \Psc\Object {
   
@@ -108,9 +107,11 @@ class Manager extends \Psc\Object {
           $image->setImagineImage($imagineImage);
           $imagineImage->save((string) $file);
           if ($file->getSize() <= 0) {
-            throw new ProcessingException('Fehler beim (NEU-)Speichern von Bild: '.$file."\n".
-                                          "Memory Usage: ".Code::getMemoryUsage()."\n".
-                                          'Datei wurde von Imagine nicht geschrieben');
+            throw new ProcessingException(
+              'Fehler beim (NEU-)Speichern von Bild: '.$file."\n".
+              "Memory Usage: ".Code::getMemoryUsage()."\n".
+              'Datei wurde von Imagine nicht geschrieben'
+            );
           }
           $this->em->persist($image);
         }
@@ -166,27 +167,28 @@ class Manager extends \Psc\Object {
    * @param ImagineImage $imageVersion z. B. das Thumbnail des Bildes
    * @retun Array $keys die Schlüssel die benutzt werden wenn man mit loadVersion() die Version wieder laden will
    */
-  public function storeVersion(Image $image, ImagineImage $imageVersion, $type, Array $arguments = array()) {
+  public function storeVersion(Image $image, ImagineImage $imageVersion, $type, Array $arguments = array(), Array $options = array()) {
     $this->attach($image);
+    $format = $this->parseFormat($options);
    
     $ac = $this->getCacheAdapter($type);
     $keys = $cacheKeys = $ac->getCacheKeys($imageVersion, $image, $arguments);
     
-    $keys = array_merge($keys, $this->getImageUniqueKeys($image));
+    $keys = array_merge($keys, $this->getImageUniqueKeys($image, $format));
     
     /* jetzt cachen wir das Bild in unserem FileCache (oder was auch immer für ein Cache) */
     $this->cacheLog('store: "'.implode(':',$keys).'"');
-    $this->cache->store($keys, $imageVersion->get('png'));
+    $this->cache->store($keys, $imageVersion->get($format));
     
     // double check writing:
     if (!$this->cache->hit($keys)) {
-      throw new ProcessingException('Fehler beim Speichern von Bild: '.$image->getSourceFile()."\n".
-                                    "Memory Usage: ".Code::getMemoryUsage()."\n".
-                                    'ImageVersion wurde vom Cache nicht geschrieben (hit ist false)'
-                                   );
+      throw new ProcessingException(
+        'Fehler beim Speichern von Bild: '.$image->getSourceFile()."\n".
+        "Memory Usage: ".Code::getMemoryUsage()."\n".
+        'ImageVersion wurde vom Cache nicht geschrieben (hit ist false)'
+      );
     }
       
-    
     return $cacheKeys; // das sind die keys ohne die imageUniques
   }
   
@@ -194,7 +196,7 @@ class Manager extends \Psc\Object {
    * @param Image $image wird nicht überprüft ob es attached ist (das vorher machen)
    * @return array
    */
-  protected function getImageUniqueKeys(Image $image) {
+  protected function getImageUniqueKeys(Image $image, $format = 'png') {
     /* zu diesen schlüsseln fügen wir den Dateinamen des Bildes hinzu */
     $sourceFile = $image->getSourceFile();
     
@@ -202,7 +204,7 @@ class Manager extends \Psc\Object {
     $keys = array_slice($sourceFile->getDirectory()->getPathArray(),-1,1);
     
     // das ist das charDir und dazu kommt noch der Dateiname
-    $keys[] = $sourceFile->getName(File::WITH_EXTENSION);
+    $keys[] = $sourceFile->getName(File::WITHOUT_EXTENSION).'.'.$format;
     return $keys;
   }
   
@@ -230,21 +232,22 @@ class Manager extends \Psc\Object {
    * @param Array $keys so wie der CacheAdapter sie zurückgibt. Der erste Key sollte der Name des Adapters sein
    * @return ImagineImage aber nur wenn es im cache ist, sonst ist es undefined was zurückgegeben wird
    */
-  public function loadVersion(Image $image, Array $keys, &$loaded) {
+  public function loadVersion(Image $image, Array $keys, &$loaded, Array $options = array()) {
     $this->attach($image);
+    $format = $this->parseFormat($options);
     
     /* Keys die reinkommen sind sowas wie:
       array($version, param1, param2, param3)
     */
-    $keys = array_merge($keys, $this->getImageUniqueKeys($image));
+    $keys = array_merge($keys, $this->getImageUniqueKeys($image, $format));
     /* jetzt ists:
-      array($version, param1,param2,param3,..., $randomverzeichnis, $filename.'.jpg')
+      array($version, param1, param2, param3, ..., $randomverzeichnis, $filename.'.png')
       o ä.
     */
     
     $dKeys = implode(':',$keys);
     $this->cacheLog('load: "'.$dKeys.'"');
-    $contents = $this->cache->load($keys,$loaded);
+    $contents = $this->cache->load($keys, $loaded);
     
     if ($loaded) {
       $this->cacheLog('hit : '.$dKeys);
@@ -261,31 +264,35 @@ class Manager extends \Psc\Object {
    * @param string $type muss als transformation und als cacheAdapter registriert sein
    * @return ImagineImage
    */
-  public function getVersion(Image $image, $type, Array $arguments = array()) {
+  public function getVersion(Image $image, $type, Array $arguments = array(), Array $options = array()) {
     $this->attach($image);
     $ca = $this->getCacheAdapter($type);
     
     $keys = $ca->convertArguments($arguments);
-    array_unshift($keys,$type); //$version zu den Cache-Keys hinzufügen
+    array_unshift($keys, $type); //$version zu den Cache-Keys hinzufügen
     
     $loaded = FALSE;
-    $imageVersion = $this->loadVersion($image, $keys, $loaded);
+    $imageVersion = $this->loadVersion($image, $keys, $loaded, $options);
+
     if (!$loaded) {
       $tf = $this->getTransformation($type);
       
       try {
-        $imageVersion = $tf->processArguments($image->getImagineImage(),$arguments);
+        $imageVersion = $tf->processArguments($image->getImagineImage(), $arguments);
       } catch (\Exception $e) {
-        throw new ProcessingException('Fehler beim Convertieren von Bild: '.$image->getSourcePath()."\n".
-                                    'Transformation: '.Code::getClass($tf).' '.Code::varInfo($arguments)."\n".
-                                    "Memory Usage: ".Code::getMemoryUsage()."\n".
-                                    $e->getMessage(),
+        throw new ProcessingException(
+          'Fehler beim Convertieren von Bild: '.$image->getSourcePath()."\n".
+          'Transformation: '.Code::getClass($tf).' '.Code::varInfo($arguments)."\n".
+          "Memory Usage: ".Code::getMemoryUsage()."\n".
+          $e->getMessage(),
                                     
-                                    0, $e);
+          0, $e
+        );
       }
       
-      $this->storeVersion($image, $imageVersion, $type, $arguments);      
+      $this->storeVersion($image, $imageVersion, $type, $arguments, $options);
     }
+
     return $imageVersion;
   }
   
@@ -296,17 +303,18 @@ class Manager extends \Psc\Object {
    * Alias /dimg muss auf das Cache verzeichnis gesetzt sein
    * @param type ist entweder ein CacheAdapater / Transformation Type oder "original"
    */
-  public function getURL(Image $image, $type, Array $arguments = array()) {
+  public function getURL(Image $image, $type, Array $arguments = array(), Array $options = array()) {
     $this->attach($image);
+    $format = $this->parseFormat($options);
     
     if ($type == 'original') {
       $parts = array_merge(array('images'), $this->getImageUniqueKeys($image));
       
     } else {
-      $this->getVersion($image, $type, $arguments); // nur einfach erstellen
-    
+      $this->getVersion($image, $type, $arguments, $options); // nur einfach erstellen
+
       $cacheKeys = $this->getCacheAdapter($type)->convertArguments($arguments);
-      $parts = array_merge(array('dimg',$type), $cacheKeys, $this->getImageUniqueKeys($image));
+      $parts = array_merge(array('dimg', $type), $cacheKeys, $this->getImageUniqueKeys($image, $format));
     }
     
     return '/'.implode('/',$parts);
@@ -538,6 +546,10 @@ class Manager extends \Psc\Object {
   
   public function getDirectory() {
     return $this->directory;
+  }
+
+  protected function parseFormat(Array $options = array()) {
+    return isset($options['format']) ? $options['format'] : 'png';
   }
 }
 ?>

@@ -178,8 +178,13 @@ class Manager extends \Psc\Object {
     $keys = array_merge($keys, $this->getImageUniqueKeys($image, $format, $quality));
     
     /* jetzt cachen wir das Bild in unserem FileCache (oder was auch immer für ein Cache) */
-    $this->cacheLog('store: "'.implode(':',$keys).'"');
-    $this->cache->store($keys, $imageVersion->get($format));
+    $options = array();
+    if ($quality) {
+      $options['quality'] = $quality;
+    }
+
+    $this->cacheLog('store: "'.implode(':',$keys).'" options: '.print_r($options,true));
+    $this->cache->store($keys, $imageVersion->get($format, $options));
     
     // double check writing:
     if (!$this->cache->hit($keys)) {

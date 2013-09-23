@@ -85,4 +85,3 @@ class CMSController extends \Psc\SimpleObject {
     return $this->v;
   }
 }
-?>

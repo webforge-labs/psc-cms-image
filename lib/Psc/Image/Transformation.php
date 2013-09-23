@@ -2,7 +2,7 @@
 
 namespace Psc\Image;
 
-use \Imagine\Image\ImageInterface AS ImagineImage;
+use Imagine\Image\ImageInterface AS ImagineImage;
 
 /**
  *
@@ -12,7 +12,6 @@ use \Imagine\Image\ImageInterface AS ImagineImage;
  */
 interface Transformation {
   
-  public function processArguments(\Imagine\Image\ImageInterface $originalImage, Array $arguments);
+  public function processArguments(ImagineImage $originalImage, Array $arguments, Array $options = array());
   
 }
-?>

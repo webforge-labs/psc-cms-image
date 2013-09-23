@@ -16,4 +16,3 @@ class ThumbnailCacheAdapter implements CacheAdapter {
     return array($method,(int) $width, (int) $height);
   }
 }
-?>

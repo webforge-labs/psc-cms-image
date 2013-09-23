@@ -289,14 +289,13 @@ class Manager extends \Psc\Object {
       $tf = $this->getTransformation($type);
       
       try {
-        $imageVersion = $tf->processArguments($image->getImagineImage(), $arguments);
+        $imageVersion = $tf->processArguments($image->getImagineImage(), $arguments, $options);
       } catch (\Exception $e) {
         throw new ProcessingException(
           'Fehler beim Convertieren von Bild: '.$image->getSourcePath()."\n".
           'Transformation: '.Code::getClass($tf).' '.Code::varInfo($arguments)."\n".
           "Memory Usage: ".Code::getMemoryUsage()."\n".
           $e->getMessage(),
-                                    
           0, $e
         );
       }

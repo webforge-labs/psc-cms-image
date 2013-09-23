@@ -5,13 +5,19 @@ namespace Psc\Image;
 use Imagine\Image\ImageInterface AS ImagineImage;
 use Imagine\Image\Box;
 
-class ThumbnailTransformation extends StandardTransformation {
+class ThumbnailTransformation implements Transformation {
 
-  public function process(ImagineImage $imagineImage, $width, $height, $method='standard') {
-    if ($method == 'standard')
+  /**
+   * @param list ($width, $height, $method) $arguments;
+   */
+  public function processArguments(ImagineImage $imagineImage, Array $arguments, Array $options = array()) {
+    list ($width, $height, $method) = $arguments;
+
+    if ($method == 'standard') {
       $style = ImagineImage::THUMBNAIL_INSET;
-    else
+    } else {
       $style = ImagineImage::THUMBNAIL_OUTBOUND;
+    }
 
     return $imagineImage->thumbnail(new Box($width, $height), $style);
   }

@@ -25,4 +25,3 @@ class ImagineModule extends \Psc\CMS\Module {
     throw new \Psc\Exception('this is deprecated now');
   }
 }
-?>

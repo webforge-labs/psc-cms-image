@@ -20,5 +20,3 @@ interface CacheAdapter {
   
   public function convertArguments(Array $arguments);
 }
-
-?>

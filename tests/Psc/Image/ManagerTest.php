@@ -152,4 +152,3 @@ class ManagerTest extends \PHPUnit_Framework_TestCase { //\Psc\Doctrine\Database
     return $this->imagine->open($this->getFile($name));
   }
 }
-?>

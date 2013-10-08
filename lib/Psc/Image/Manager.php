@@ -16,6 +16,7 @@ use Psc\PSC;
 use Imagine\Gd\Imagine;
 use Psc\Data\FileCache;
 use Psc\Data\Cache;
+use Webforge\Framework\Project as Webforge\Project;
 
 class Manager extends \Psc\Object {
   
@@ -74,19 +75,30 @@ class Manager extends \Psc\Object {
   /**
    * @param Cache $imagesCache in Falle eines FileCaches wird vor diesen kein "images" angehängt (als cache key)
    */
-  public function __construct($imageEntityName = 'BasicImage', EntityManager $em, Dir $imagesDirectory = NULL, Cache $imagesCache = NULL) {
-    $this->images = new ArrayCollection();
+  public function __construct($imageEntityName = 'BasicImage', EntityManager $em, Dir $imagesDirectory, Cache $imagesCache) {
     $this->entityName = $imageEntityName;
     $this->em = $em;
     $this->imageRep = $this->em->getRepository($this->entityName);
-    $this->directory = $imagesDirectory ?: PSC::get(PSC::PATH_FILES)->append('images/');
+    $this->directory = $imagesDirectory->create();
+    $this->cache = $imagesCache;
   
     $this->imagine = new Imagine();
-    
-    $this->cache = $imagesCache ?: new FileCache(PSC::get(PSC::PATH_CACHE)->append('images/'));
-    $this->directory->create();
+    $this->images = new ArrayCollection();
   }
-  
+
+  public static function createCach(Dir $cacheDir) {
+    return new FileCache($cacheDir);
+  }
+
+  public static function createForProject(WebforgeProject $project, EntityManager $em, $entityName = NULL) {
+    return new static(
+      $entityName,
+      $em,
+      $project->dir('cms-images'),
+      static::createCache($project->dir('cache')->sub('images/'))
+    );
+  }
+
   /**
    * Erstellt ein neues Bild und fügt es dem Manager hinzu
    *

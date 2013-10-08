@@ -19,12 +19,12 @@
     "require": {
         "imagine/Imagine": "0.5.*@stable"
     },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "1.3.x-dev"
-        }
-    },
     "require-dev": {
         "webforge/testplate": "1.2.*@dev"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.4.x-dev"
+        }
     }
 }

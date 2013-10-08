@@ -16,7 +16,7 @@ use Psc\PSC;
 use Imagine\Gd\Imagine;
 use Psc\Data\FileCache;
 use Psc\Data\Cache;
-use Webforge\Framework\Project as Webforge\Project;
+use Webforge\Framework\Project as WebforgeProject;
 
 class Manager extends \Psc\Object {
   

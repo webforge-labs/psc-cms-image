@@ -86,7 +86,7 @@ class Manager extends \Psc\Object {
     $this->images = new ArrayCollection();
   }
 
-  public static function createCach(Dir $cacheDir) {
+  public static function createCache(Dir $cacheDir) {
     return new FileCache($cacheDir);
   }
 

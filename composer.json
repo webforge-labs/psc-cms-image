@@ -17,7 +17,7 @@
     },
     "minimum-stability": "dev",
     "require": {
-        "imagine/Imagine": "0.5.*@stable"
+        "imagine/imagine": "0.5.*@stable"
     },
     "require-dev": {
         "webforge/testplate": "1.2.*@dev"
